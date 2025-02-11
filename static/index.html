@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>在线加解密工具</title>
+    <style>
+        input,
+        textarea,
+        select,
+        button
+        {
+            margin: 10px 0;
+            display: block;
+            width: 300px;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .leftBox,
+        .rightBox {
+            margin: 0 30px;
+        }
+
+        #keyInput,
+        #ivInput {
+            width: 280px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+<h1 style="text-align: center;">在线加解密工具</h1>
+
+<div class="container">
+    <div class="leftBox">
+        <label for="inputText">文本：</label>
+        <textarea id="inputText" placeholder="输入明文或密文" rows="18"></textarea>
+    </div>
+
+    <div class="middleBox">
+        <label for="algorithm">算法：</label>
+        <select id="algorithm">
+            <option value="rsa">RSA（仅支持自动生成公钥和私钥）</option>
+            <option value="aes">AES</option>
+        </select>
+
+        <label for="aesMode" class="hidden">AES模式：</label>
+        <select id="aesMode" class="hidden">
+            <option value="ECB">ECB (PKCS7Padding)</option>
+            <option value="CBC">CBC (PKCS7Padding)</option>
+        </select>
+
+        <label for="mode">操作：</label>
+        <select id="mode">
+            <option value="encrypt">加密</option>
+            <option value="decrypt">解密</option>
+        </select>
+
+        <label id="keyLabel" for="keyInput">密钥（UTF8）：</label>
+        <input type="text" id="keyInput" placeholder="16字节" class="hidden">
+
+        <label id="ivLabel" for="ivInput" class="hidden">偏移量IV（UTF8）：</label>
+        <input type="text" id="ivInput" placeholder="16字节" class="hidden">
+
+        <button id="processButton">提交</button>
+    </div>
+
+    <div class="rightBox">
+        <label for="resultText">结果：</label>
+        <textarea id="resultText" rows="18" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    // 显示/隐藏元素
+    const toggleDisplay = (element, show) =>
+        element.classList.toggle('hidden', !show);
+
+    const algorithmSelect = document.getElementById('algorithm');
+    const aesModeLabel = document.getElementById('aesMode').previousElementSibling;
+    const aesModeSelect = document.getElementById('aesMode');
+    const keyLabel = document.getElementById('keyLabel');
+    const keyInput = document.getElementById('keyInput');
+    const ivLabel = document.getElementById('ivLabel');
+    const ivInput = document.getElementById('ivInput');
+
+    // 算法切换
+    algorithmSelect.addEventListener('change', () => {
+        const isAES = algorithmSelect.value === 'aes';
+        [aesModeLabel, aesModeSelect, keyLabel, keyInput].forEach(el =>
+            toggleDisplay(el, isAES));
+        toggleDisplay(ivLabel, false);
+        toggleDisplay(ivInput, false);
+    });
+
+    // AES模式切换
+    aesModeSelect.addEventListener('change', () => {
+        const isCBC = aesModeSelect.value === 'CBC';
+        toggleDisplay(ivLabel, isCBC);
+        toggleDisplay(ivInput, isCBC);
+    });
+
+    // 提交
+    document.getElementById('processButton').addEventListener('click', () => {
+        const payload = {
+            text: document.getElementById('inputText').value,
+            key: algorithmSelect.value === 'aes' ? keyInput.value : undefined,
+            mode: aesModeSelect.value,
+            iv: ivInput.value
+        };
+
+        const endpoint = `/api/${algorithmSelect.value}/${document.getElementById('mode').value}`;
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(response => response.text())
+            .then(data => document.getElementById('resultText').value = data)
+            .catch(error => document.getElementById('resultText').value = '错误: ' + error);
+    });
+</script>
+</body>
+
+</html>
+

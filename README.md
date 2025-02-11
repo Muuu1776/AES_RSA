@@ -1,5 +1,5 @@
 # AES_RSA
-基于JAVA的AES(ECB,CBC)和RSA在线加解密工具
+由JAVA实现的AES(ECB,CBC)和RSA在线加解密工具
 
 ### 基于Web的加密解密工具，后端由JAVA实现。支持以下功能：
 
